@@ -64,6 +64,9 @@ class Koch{
 		sp_mat A;
 		void fill_A();
 		void solve_A();
+		size_t number_eig_val;
+		vec eigval;
+		mat eigvec;
 
 		umat B;
 		umat C;

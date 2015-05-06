@@ -69,7 +69,7 @@ void Gnuplotting::ylabel(const char * y){
 
 void Gnuplotting::xystream(vector<double> & x, vector<double> & y){
 	size_t N = x.size();
-	cmd("plot '-' w points title ''");
+	cmd("plot '-' w lines title ''");
 	for(size_t i=0; i<N; i++){
 		stringstream ss;
 		ss << x[i] << " " << y[i];

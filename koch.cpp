@@ -29,8 +29,6 @@ void Line::print(){
 }
 
 
-
-
 Koch::Koch(){
 	n = 4;
 	l_max = 2;
@@ -211,9 +209,6 @@ void Koch::initialize_interior(){
 	interior.submat(lines[3].i1+1,lines[3].j1+1,lines[0].i2-1,lines[0].j2-1) = box;
 	interior.save("data/interior_init.dat",arma_ascii);
 }
-
-
-
 
 void Koch::draw_lines(){
 	cout << "entering draw_lines" << endl;
@@ -445,7 +440,7 @@ void Koch::fill_A(){
 		if(interior(i,j)==0){
 			continue;
 		}
-		A(row,row) = 0.0;
+		//A(row,row) = 0.0;
 		B(row,row) = 0;
 		//left
 		if((i-1) >= 0){
@@ -488,8 +483,9 @@ void Koch::fill_A(){
 void Koch::solve_A(){
 	vec eigval;
 	mat eigvec;
-	size_t number_eig_val = 40;
-	eigs_sym(eigval, eigvec, A, number_eig_val,"la", 1.0e-13);
+	size_t number_eig_val = 1;
+	eigs_sym(eigval, eigvec, A, number_eig_val,"la", 1.0e-2);
+	//eigval = eigs_sym(A,number_eig_val,"la",1.0e-10);
 	vec omega = eigval;
 	for(size_t i=0; i<number_eig_val; i++){
 		omega(i) = sqrt((4.0 - eigval(i))/(delta*delta));
