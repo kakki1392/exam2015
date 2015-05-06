@@ -26,18 +26,28 @@ int main(){
 	k.initialize_interior();
 	k.update_l();
 	k.draw_lines();
-	//k.update_l();
-	//k.draw_lines();
 	k.update_l();
 	k.draw_lines();
-	k.update_l();
-	k.draw_lines();
+//	k.update_l();
+//	k.draw_lines();
+//	k.update_l();
+//	k.draw_lines();
+	k.gplt.cmd("set palette gray");
+	k.gplt.cmd("set palette negative");
 	k.gplt.cmd("set size square");
 	k.plot_interior_boundary();
 	//k.plot_lines();
 	//k.plot_lines();
 	k.fill_A();
 	k.solve_A();
+	for(size_t it=9; it>=1; it--){
+		k.extract_eigvec(it);
+		k.plot_u();
+		sleep(5);
+	}
+//	k.x.print("x: ");
+
+	/*
 	cout << "grid max: " << k.grid_max << endl;
 	cout << "test grid max: " << ((double) (k.N-1)/2)*k.delta << endl;
 //	cout << "grid_max*N/2: " << k.grid_max*((double) k.N/2.0) << endl;
@@ -49,6 +59,9 @@ int main(){
 	cout << "points in B: " << accu(k.B) << endl;
 	cout << "points in C: " << accu(k.C) << endl;
 	cout << "points in D: " << accu(k.D) << endl;
+	*/
+
+
 	//k.plot_lines();
 	//k.draw_lines();
 	//k.plot_boundary();

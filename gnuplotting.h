@@ -44,6 +44,7 @@ class Gnuplotting {
 		void xyzstream(size_t & N, arma::vec & x, arma::vec & y, arma::mat & z);
 		void heatmap(size_t & Nx, size_t & Ny, arma::mat & z);
 		void show_matrix(size_t &N, umat & x);
+		void heatmap_coords(vec &x, vec &y, mat &u, size_t &N, vector<double> &X, vector<double> &Y);
 	private:
 		string filename;
 		FILE * pipe;

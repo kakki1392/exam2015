@@ -30,7 +30,8 @@ class Koch{
 		double s;         //length of line
 		size_t s_index;   //length of line in indeces
 		double L;         //length of line at l=0
-		int m;            //
+		double m;            //
+		int m_int;
 		double delta_min; //minimum grid step
 		double delta;     //used grid step
 		double grid_max;
@@ -58,15 +59,20 @@ class Koch{
 		void plot_boundary();
 		void plot_interior();
 		void plot_interior_boundary();
+		void plot_u();
 		void fill_interior();
 		Gnuplotting gplt;
 
 		sp_mat A;
 		void fill_A();
 		void solve_A();
+		void extract_eigvec(size_t k);
 		size_t number_eig_val;
 		vec eigval;
+		vec omega;
+		vec coeff_omega;
 		mat eigvec;
+		mat u;
 
 		umat B;
 		umat C;

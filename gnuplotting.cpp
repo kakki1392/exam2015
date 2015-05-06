@@ -204,3 +204,25 @@ void Gnuplotting::show_matrix(size_t &N, umat & x){
 	xystream(x1,y1);
 }
 
+void Gnuplotting::heatmap_coords(vec &x, vec &y, mat &u, size_t & N,vector<double> &X, vector<double> &Y){
+	size_t NX = X.size();
+	cmd("plot '-' w image, '-' w lines ls -1");
+	for(size_t i=0; i<N; i++){
+		for(size_t j=0; j<N; j++){
+		stringstream ss;
+		ss << x(i) << " " << y(j) << " " << u(i,j);
+		string str = ss.str();
+		cmd(str);
+		}
+		cmd("");
+	}
+	cmd("e");
+	for(size_t it=0; it<NX; it++){
+		stringstream ss;
+		ss << X[it] << " " << Y[it] << " ";
+		string str = ss.str();
+		cmd(str);
+	}
+	cmd("e");
+}
+

@@ -30,14 +30,16 @@ void Line::print(){
 
 
 Koch::Koch(){
+	number_eig_val = 10;
 	n = 4;
 	l_max = 2;
 	l = 0;
 	L = 1.0;
 	s = 1.0;
-	m = 1.0;
+	m = 2.0;
+	m_int = 2;
 	delta_min = L*pow(0.25,l_max);
-	delta = delta_min;
+	delta = delta_min/m;
 	grid_max = L/2.0;
 	for(int i = 1; i<(l_max+1);i++){
 		grid_max = grid_max + L*pow(0.25,i);
@@ -147,8 +149,20 @@ void Koch::plot_interior_boundary(){
 	gplt.two_xystream(u_out,v_out,"boundary",u,v,"interior");
 }
 
+void Koch::plot_u(){
+	vector<double> X ; 
+	vector<double> Y;
+	for(size_t it=0; it<n; it++){
+		X.push_back(x(lines[it].i1));
+		X.push_back(x(lines[it].i2));
+		Y.push_back(x(lines[it].j1));
+		Y.push_back(x(lines[it].j2));
+	}
+	gplt.heatmap_coords(x,x,u,N,X,Y);
+}
+
 void Koch::initialize_line(){
-	size_t steps = intpower(4,l_max)/4;
+	size_t steps = m_int*intpower(4,l_max)/4;
 	stp = steps;
 	s_index = 4*steps + 1;
 	cout << "steps: " << steps << endl;
@@ -303,7 +317,7 @@ void Koch::update_l(){
 	cout << "entering update_l()" << endl;
 	int new_l = l+1;
 	size_t new_n = 8*n;
-	size_t s = intpower(4,l_max)/intpower(4,new_l); //CAREFUL
+	size_t s = m_int*intpower(4,l_max)/intpower(4,new_l); //CAREFUL
 	size_t longstep = 2*s;
 	cout << "new_l: " << new_l << endl;
 	cout << "steps: " << s << endl;
@@ -481,20 +495,34 @@ void Koch::fill_A(){
 }
 
 void Koch::solve_A(){
-	vec eigval;
-	mat eigvec;
-	size_t number_eig_val = 1;
-	eigs_sym(eigval, eigvec, A, number_eig_val,"la", 1.0e-2);
+	eigs_sym(eigval, eigvec, A, number_eig_val,"la", 1.0e-6);
 	//eigval = eigs_sym(A,number_eig_val,"la",1.0e-10);
-	vec omega = eigval;
+	omega = eigval;
+//	vec coeff_omega = (1.0/(M_PI*sqrt(2)))*omega;
 	for(size_t i=0; i<number_eig_val; i++){
 		omega(i) = sqrt((4.0 - eigval(i))/(delta*delta));
 	}
+	coeff_omega = (1.0/(M_PI*sqrt(2)))*omega;
 	eigval.raw_print(cout,"eigvals: ");
 	omega.raw_print(cout,"omega: ");
+	coeff_omega.raw_print(cout,"coeffs: ");
 	eigval.save("data/eigval_l2.dat", raw_ascii);
 	omega.save("data/omega_l2.dat",raw_ascii);
 }
+
+void Koch::extract_eigvec(size_t k){
+	vec u_vec = eigvec.col(k);
+	u_vec.save("data/eigvec.dat",raw_ascii);
+	u = zeros<mat>(N,N);
+	size_t start = 0;
+	size_t stop = 0;
+	for(size_t it=0; it<N; it++){
+		stop = start + N - 1;
+		u.col(it) = u_vec.subvec(start,stop);
+		start = stop + 1;
+	}
+}
+
 
 /*
 Eigensolv::Eigensolv(){
