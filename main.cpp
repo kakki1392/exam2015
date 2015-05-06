@@ -17,7 +17,7 @@ int main(){
 	k.gplt.cmd("set ylabel 'y'");
 	k.gplt.cmd("set title 'l = 3, L = 1'");
 	*/
-
+	k.gplt.cmd("set size square");
 
 	k.fill_x();
 	//k.x.print("x: ");
@@ -28,26 +28,31 @@ int main(){
 	k.draw_lines();
 	k.update_l();
 	k.draw_lines();
+	k.fill_corner();
+//	k.plot_corners();
 //	k.update_l();
 //	k.draw_lines();
 //	k.update_l();
 //	k.draw_lines();
-	k.gplt.cmd("set palette gray");
-	k.gplt.cmd("set palette negative");
-	k.gplt.cmd("set size square");
+//	k.gplt.cmd("set palette negative");
+//	k.gplt.cmd("set size square");
 	k.plot_interior_boundary();
 	//k.plot_lines();
 	//k.plot_lines();
 	k.fill_A();
+	k.fill_A_eff();
+	k.fill_A_eff_biharmonic();
 	k.solve_A();
-	for(size_t it=9; it>=1; it--){
+	//k.solve_A_eff();
+	
+	for(size_t it=69; it>=1; it--){
 		k.extract_eigvec(it);
 		k.plot_u();
-		sleep(5);
+		sleep(1);
 	}
+
 //	k.x.print("x: ");
 
-	/*
 	cout << "grid max: " << k.grid_max << endl;
 	cout << "test grid max: " << ((double) (k.N-1)/2)*k.delta << endl;
 //	cout << "grid_max*N/2: " << k.grid_max*((double) k.N/2.0) << endl;
@@ -56,6 +61,7 @@ int main(){
 	cout << "l: " << k.l << endl;
 	cout << "matrix size: " << k.N*k.N << endl;
 	cout << "number of interior points: " << accu(k.interior) << endl;
+	/*
 	cout << "points in B: " << accu(k.B) << endl;
 	cout << "points in C: " << accu(k.C) << endl;
 	cout << "points in D: " << accu(k.D) << endl;

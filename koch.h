@@ -6,6 +6,17 @@
 using namespace arma;
 using namespace std;
 
+class Point{
+	public:
+		Point();
+		Point(size_t i_add, size_t j_add);
+		~Point();
+		bool equal(Point &p);
+		size_t i;
+		size_t j;
+};
+
+
 class Line{
 	public:
 		Line();
@@ -42,10 +53,11 @@ class Koch{
 		size_t origin;
 		umat boundary;
 		umat interior;
-		mat grid;
+		umat corner;
 		vec x;
 
 		void fill_x();
+		void fill_corner();
 
 		void initialize_line();
 		void initialize_interior();
@@ -53,19 +65,27 @@ class Koch{
 		void test_lines();
 		size_t intpower(size_t base, size_t exponent);
 		void update_l();
+
 		void draw_lines();
 		void plot_single_line_corners(size_t it);
+		void plot_corners();
 		void plot_lines();
 		void plot_boundary();
 		void plot_interior();
 		void plot_interior_boundary();
 		void plot_u();
+
 		void fill_interior();
 		Gnuplotting gplt;
 
-		sp_mat A;
 		void fill_A();
+		void fill_A_eff();
+		void fill_A_eff_biharmonic();
+
 		void solve_A();
+		void solve_A_eff();
+		void solve_A_eff_biharmonic();
+
 		void extract_eigvec(size_t k);
 		size_t number_eig_val;
 		vec eigval;
@@ -74,9 +94,29 @@ class Koch{
 		mat eigvec;
 		mat u;
 
+		vec omega_A;
+		vec omega_A_eff;
+		vec omega_A_eff_biharmonic;
+
+		vec coeff_A;
+		vec coeff_A_eff;
+		vec coeff_A_eff_biharmonic;
+		
+		mat eigvec_A;
+		mat eigvec_A_eff;
+		mat eigvec_A_eff_biharmonic;
+
+		vec eigval_A;
+		vec eigval_A_eff;
+		vec eigval_A_eff_biharmonic;
+
+		sp_mat A;
+		sp_mat A_eff;
+		sp_mat A_eff_biharmonic;
+
 		umat B;
-		umat C;
-		umat D;
+		umat B_eff;
+		umat B_eff_biharmonic;
 
 };
 /*

@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <armadillo>
+#include <cmath>
 
 using namespace std;
 
@@ -69,7 +70,7 @@ void Gnuplotting::ylabel(const char * y){
 
 void Gnuplotting::xystream(vector<double> & x, vector<double> & y){
 	size_t N = x.size();
-	cmd("plot '-' w lines title ''");
+	cmd("plot '-' w points title ''");
 	for(size_t i=0; i<N; i++){
 		stringstream ss;
 		ss << x[i] << " " << y[i];
@@ -191,7 +192,7 @@ void Gnuplotting::show_matrix(size_t &N, umat & x){
 		for(size_t j=0; j<N; j++){
 			double n1 = (double) i;
 			double n2 = (double) j;
-			if(x(i,j)==1){
+			if(x(i,j)!=0){
 				x1.push_back(n1);
 				y1.push_back(n2);
 			}
@@ -206,7 +207,27 @@ void Gnuplotting::show_matrix(size_t &N, umat & x){
 
 void Gnuplotting::heatmap_coords(vec &x, vec &y, mat &u, size_t & N,vector<double> &X, vector<double> &Y){
 	size_t NX = X.size();
-	cmd("plot '-' w image, '-' w lines ls -1");
+	double largest = u.max();
+	largest = abs(largest);
+	double smallest = u.min();
+	smallest = abs(smallest);
+	if(largest > smallest){
+		smallest = - largest;
+		stringstream number;
+		number << "set cbrange [" << smallest << ":" << largest << "]";
+		string str = number.str();
+		cmd(str);
+		cmd("set palette defined (-1 \"blue\", 0 \"white\", 1 \"red\" )");
+	}else{
+		largest = smallest;
+		smallest = - largest;
+		stringstream number;
+		number << "set cbrange [" << smallest << ":" << largest << "]";
+		string str = number.str();
+		cmd(str);
+		cmd("set palette defined (-1 \"blue\", 0 \"white\", 1 \"red\" )");
+	}
+	cmd("plot '-' w image t '', '-' w lines ls -1 t ''");
 	for(size_t i=0; i<N; i++){
 		for(size_t j=0; j<N; j++){
 		stringstream ss;

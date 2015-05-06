@@ -2,6 +2,28 @@
 #include <cmath>
 #include <iostream>
 
+Point::Point(){
+	i=0;
+	j=0;
+}
+
+Point::Point(size_t i_add, size_t j_add){
+	i=i_add;
+	j=j_add;
+}
+
+Point::~Point(){}
+
+bool Point::equal(Point &p){
+	if(i==p.i && j==p.j){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
+
 Line::Line(){
 	i1 = 0;
 	i2 = 0;
@@ -30,7 +52,7 @@ void Line::print(){
 
 
 Koch::Koch(){
-	number_eig_val = 10;
+	number_eig_val = 70;
 	n = 4;
 	l_max = 2;
 	l = 0;
@@ -86,6 +108,26 @@ void Koch::plot_single_line_corners(size_t it){
 	v(0) = x(lines[it].j1);
 	v(1) = x(lines[it].j2);
 	gplt.xystream(length,u,v);
+}
+
+void Koch::plot_corners(){
+	vector<double> X;
+	vector<double> Y;
+	vector<double> X_int;
+	vector<double> Y_int;
+	for(size_t i=0; i<N; i++){
+		for(size_t j=0; j<N; j++){
+			if(corner(i,j)==1){
+				X.push_back(x(i));
+				Y.push_back(x(j));
+			}
+			if(interior(i,j)==1){
+				X_int.push_back(x(i));
+				Y_int.push_back(x(j));
+			}
+		}
+	}
+	gplt.two_xystream(X,Y,"corners",X_int,Y_int,"interior");
 }
 
 void Koch::plot_lines(){
@@ -250,6 +292,8 @@ void Koch::draw_lines(){
 	}
 	//boundary.save("data/boundaryBigBig5.dat", raw_ascii);
 	interior.save("data/interior_draw.dat",arma_ascii);
+	//exterior = zeros<umat>(N,N);
+	//exterior = exterior - interior;
 	cout << "leaving draw_lines" << endl;
 }
 
@@ -486,32 +530,47 @@ void Koch::fill_A(){
 		}
 		i++;
 	}
-	C = trans(B);
-	D = (B==C);
 	cout << "leaving fill_A()" << endl;
-	//B.save("data/matrix.dat", arma_ascii);
-	//size_t length = N*N;
-	//gplt.show_matrix(length,B);
 }
 
 void Koch::solve_A(){
-	eigs_sym(eigval, eigvec, A, number_eig_val,"la", 1.0e-6);
-	//eigval = eigs_sym(A,number_eig_val,"la",1.0e-10);
-	omega = eigval;
-//	vec coeff_omega = (1.0/(M_PI*sqrt(2)))*omega;
+	eigs_sym(eigval_A, eigvec_A, A, number_eig_val,"la", 1.0e-9);
+	omega_A = eigval_A;
 	for(size_t i=0; i<number_eig_val; i++){
-		omega(i) = sqrt((4.0 - eigval(i))/(delta*delta));
+		omega_A(i) = sqrt(4.0 - eigval_A(i))/delta;
 	}
-	coeff_omega = (1.0/(M_PI*sqrt(2)))*omega;
-	eigval.raw_print(cout,"eigvals: ");
-	omega.raw_print(cout,"omega: ");
-	coeff_omega.raw_print(cout,"coeffs: ");
-	eigval.save("data/eigval_l2.dat", raw_ascii);
-	omega.save("data/omega_l2.dat",raw_ascii);
+	coeff_A = (1.0/(M_PI*sqrt(2)))*omega_A;
+	eigval_A.raw_print(cout,"eigval_A: ");
+	omega_A.raw_print(cout,"omega_A: ");
+	coeff_A.raw_print(cout,"coeff_A: ");
+}
+
+void Koch::solve_A_eff(){
+	eigs_sym(eigval_A_eff, eigvec_A_eff, A_eff, number_eig_val,"la", 1.0e-9);
+	omega_A_eff = eigval_A_eff;
+	for(size_t i=0; i<number_eig_val; i++){
+		omega_A_eff(i) = sqrt(4.0 - eigval_A_eff(i))/delta;
+	}
+	coeff_A_eff = (1.0/(M_PI*sqrt(2)))*omega_A_eff;
+	eigval_A_eff.raw_print(cout,"eigval_A_eff: ");
+	omega_A_eff.raw_print(cout,"omega_A_eff: ");
+	coeff_A_eff.raw_print(cout,"coeff_A_eff: ");
+}
+
+void Koch::solve_A_eff_biharmonic(){
+	eigs_sym(eigval_A_eff_biharmonic, eigvec_A_eff_biharmonic, A_eff_biharmonic, number_eig_val,"la", 1.0e-9);
+	omega_A_eff_biharmonic = eigval_A_eff_biharmonic;
+	for(size_t i=0; i<number_eig_val; i++){
+		omega_A_eff_biharmonic(i) = pow(eigval_A_eff_biharmonic(i), 0.25)/delta;
+	}
+	coeff_A_eff_biharmonic = (1.0/(M_PI*sqrt(2)))*omega_A_eff_biharmonic;
+	eigval_A_eff_biharmonic.raw_print(cout,"eigval_A_eff_biharmonic: ");
+	omega_A_eff_biharmonic.raw_print(cout,"omega_A_eff_biharmonic: ");
+	coeff_A_eff_biharmonic.raw_print(cout,"coeff_A_eff_biharmonic: ");
 }
 
 void Koch::extract_eigvec(size_t k){
-	vec u_vec = eigvec.col(k);
+	vec u_vec = eigvec_A.col(k);
 	u_vec.save("data/eigvec.dat",raw_ascii);
 	u = zeros<mat>(N,N);
 	size_t start = 0;
@@ -523,6 +582,342 @@ void Koch::extract_eigvec(size_t k){
 	}
 }
 
+
+void Koch::fill_A_eff(){
+	vector<Point> points;
+	for(size_t i=0; i<N; i++){
+		for(size_t j=0; j<N; j++){
+			if(interior(i,j)==1){
+				Point point(i,j);
+				points.push_back(point);
+			}
+		}
+	}
+	cout << "size of points: " << points.size() << endl;
+	size_t M = points.size();
+	A_eff = sp_mat(M,M);
+	B_eff = umat(M,M);
+//	sp_mat A_eff(M,M);
+//	umat B_eff(M,M);
+
+	for(size_t m=0; m<M; m++){
+
+		Point left(points[m].i-1, points[m].j);
+		Point right(points[m].i+1, points[m].j);
+		Point up(points[m].i, points[m].j+1);
+		Point down(points[m].i, points[m].j-1);
+		size_t pos = 0;
+		//LEFT
+		if( (left.i >= 0) && interior(left.i, left.j)==1){
+			pos = 0;
+			for(pos = 0; pos<M; pos++){
+				if(left.equal(points[pos])){
+					break;
+				}
+			}
+			A_eff(m,pos) = 1.0;
+			B_eff(m,pos) = 1;
+		}
+		//RIGHT
+		if( (right.i < M) && interior(right.i, right.j)==1){
+			pos = 0;
+			for(pos = 0; pos<M; pos++){
+				if(right.equal(points[pos])){
+					break;
+				}
+			}
+			A_eff(m,pos) = 1.0;
+			B_eff(m,pos) = 1;
+		}
+		//UP
+		if( (up.i < M) && interior(up.i, up.j)==1){
+			pos = 0;
+			for(pos = 0; pos<M; pos++){
+				if(up.equal(points[pos])){
+					break;
+				}
+			}
+			A_eff(m,pos) = 1.0;
+			B_eff(m,pos) = 1;
+		}
+		//DOWN
+		if( (down.i >= 0) && interior(down.i, down.j)==1){
+			size_t pos = 0;
+			for(pos = 0; pos<M; pos++){
+				if(down.equal(points[pos])){
+					break;
+				}
+			}
+			A_eff(m,pos) = 1.0;
+			B_eff(m,pos) = 1;
+		}
+	}
+	/*
+	//gplt.show_matrix(M,B_eff);
+	umat B_eff_T = B_eff.t();
+	//gplt.show_matrix(M,B_eff_T);
+	umat B_equal = (B_eff == B_eff_T);
+	size_t inside = accu(B_equal);
+	bool isInside = (inside==(M*M));
+	cout << "transpose equal?: " << isInside << endl;;
+	vec eigval_new = eigs_sym(A_eff,number_eig_val,"la",1.0e-8);
+	eigval_new.raw_print(cout,"new eigenvalues: ");
+	*/
+
+
+}
+
+
+void Koch::fill_A_eff_biharmonic(){
+	vector<Point> points;
+	for(size_t i=0; i<N; i++){
+		for(size_t j=0; j<N; j++){
+			if(interior(i,j)==1){
+				Point point(i,j);
+				points.push_back(point);
+			}
+		}
+	}
+	cout << "size of points: " << points.size() << endl;
+	size_t M = points.size();
+//	sp_mat A_eff_biharmonic(M,M);
+//	umat B_eff(M,M);
+	A_eff_biharmonic = sp_mat(M,M);
+	B_eff_biharmonic = umat(M,M);
+
+	for(size_t m=0; m<M; m++){
+
+		//Nearest neighbours
+		Point left(points[m].i-1, points[m].j);
+		Point right(points[m].i+1, points[m].j);
+		Point up(points[m].i, points[m].j+1);
+		Point down(points[m].i, points[m].j-1);
+		//Diagonal neighbours
+		Point left_up(points[m].i-1, points[m].j+1);
+		Point right_up(points[m].i+1, points[m].j+1);
+		Point left_down(points[m].i-1, points[m].j-1);
+		Point right_down(points[m].i+1, points[m].j-1);
+		//Second next door
+		Point left_left(points[m].i-2, points[m].j);
+		Point right_right(points[m].i+2, points[m].j);
+		Point up_up(points[m].i, points[m].j+2);
+		Point down_down(points[m].i, points[m].j-2);
+
+		double count = 0.0;
+		size_t pos = 0;
+		//LEFT
+		if(interior(left.i,left.j)==1){
+			//adding left to A
+			pos = 0;
+			for(pos = 0; pos<M; pos++){
+				if(left.equal(points[pos])){
+					break;
+				}
+			}
+			A_eff_biharmonic(m,pos) = -8.0;
+			B_eff_biharmonic(m,pos) = -8;
+			pos = 0;
+			if(interior(left_left.i,left_left.j)==1){
+				//adding left_left to A
+				for(pos = 0; pos<M; pos++){
+					if(left_left.equal(points[pos])){
+						break;
+					}
+				}
+				A_eff_biharmonic(m,pos) = 1.0;
+				B_eff_biharmonic(m,pos) = 1;
+				pos = 0;
+			}
+		}else{
+			if(corner(left.i,left.j)!=1){
+				//boundary condition u_left_left = u
+				count = count + 1.0;
+			}
+		}
+		
+		//RIGHT
+		if(interior(right.i,right.j)==1){
+			//adding right to A
+			pos = 0;
+			for(pos = 0; pos<M; pos++){
+				if(right.equal(points[pos])){
+					break;
+				}
+			}
+			A_eff_biharmonic(m,pos) = -8.0;
+			B_eff_biharmonic(m,pos) = -8;
+			pos = 0;
+			if(interior(right_right.i,right_right.j)==1){
+				//adding right_right to A
+				for(pos = 0; pos<M; pos++){
+					if(right_right.equal(points[pos])){
+						break;
+					}
+				}
+				A_eff_biharmonic(m,pos) = 1.0;
+				B_eff_biharmonic(m,pos) = 1;
+				pos = 0;
+			}
+		}else{
+			if(corner(right.i,right.j)!=1){
+				//boundary condition u_right_right = u
+				count = count + 1.0;
+			}
+		}
+
+		//UP
+		if(interior(up.i,up.j)==1){
+			//adding up to A
+			pos = 0;
+			for(pos = 0; pos<M; pos++){
+				if(up.equal(points[pos])){
+					break;
+				}
+			}
+			A_eff_biharmonic(m,pos) = -8.0;
+			B_eff_biharmonic(m,pos) = -8;
+			pos = 0;
+			if(interior(up_up.i,up_up.j)==1){
+				//adding up_up to A
+				for(pos = 0; pos<M; pos++){
+					if(up_up.equal(points[pos])){
+						break;
+					}
+				}
+				A_eff_biharmonic(m,pos) = 1.0;
+				B_eff_biharmonic(m,pos) = 1;
+				pos = 0;
+			}
+		}else{
+			if(corner(up.i,up.j)!=1){
+				//boundary condition u_up_up = u
+				count = count + 1.0;
+			}
+		}
+
+		//DOWN
+		if(interior(down.i,down.j)==1){
+			//adding down to A
+			pos = 0;
+			for(pos = 0; pos<M; pos++){
+				if(down.equal(points[pos])){
+					break;
+				}
+			}
+			A_eff_biharmonic(m,pos) = -8.0;
+			B_eff_biharmonic(m,pos) = -8;
+			pos = 0;
+			if(interior(down_down.i,down_down.j)==1){
+				//adding down_down to A
+				for(pos = 0; pos<M; pos++){
+					if(down_down.equal(points[pos])){
+						break;
+					}
+				}
+				A_eff_biharmonic(m,pos) = 1.0;
+				B_eff_biharmonic(m,pos) = 1;
+				pos = 0;
+			}
+		}else{
+			if(corner(down.i,down.j)!=1){
+				//boundary condition u_down_down = u
+				count = count + 1.0;
+			}
+		}
+		
+		//LEFT_UP
+		if(interior(left_up.i,left_up.j)==1){
+			//adding left_up to A
+			pos = 0;
+			for(pos = 0; pos<M; pos++){
+				if(left_up.equal(points[pos])){
+					break;
+				}
+			}
+			A_eff_biharmonic(m,pos) = 2.0;
+			B_eff_biharmonic(m,pos) = 2;
+			pos = 0;
+		}
+		//RIGHT_UP
+		if(interior(right_up.i,right_up.j)==1){
+			//adding right_up to A
+			pos = 0;
+			for(pos = 0; pos<M; pos++){
+				if(right_up.equal(points[pos])){
+					break;
+				}
+			}
+			A_eff_biharmonic(m,pos) = 2.0;
+			B_eff_biharmonic(m,pos) = 2;
+			pos = 0;
+		}
+		//LEFT_DOWN
+		if(interior(left_down.i,left_down.j)==1){
+			//adding left_down to A
+			pos = 0;
+			for(pos = 0; pos<M; pos++){
+				if(left_down.equal(points[pos])){
+					break;
+				}
+			}
+			A_eff_biharmonic(m,pos) = 2.0;
+			B_eff_biharmonic(m,pos) = 2;
+			pos = 0;
+		}
+		//RIGHT_DOWN
+		if(interior(right_down.i,right_down.j)==1){
+			//adding right_down to A
+			pos = 0;
+			for(pos = 0; pos<M; pos++){
+				if(right_down.equal(points[pos])){
+					break;
+				}
+			}
+			A_eff_biharmonic(m,pos) = 2.0;
+			B_eff_biharmonic(m,pos) = 2;
+			pos = 0;
+		}
+
+		//SET CURRENT POINT
+		A_eff_biharmonic(m,m) = 20.0 + count;
+		B_eff_biharmonic(m,m) = 20 + ((size_t) count);
+
+	}
+
+	/*
+	gplt.show_matrix(M,B_eff_biharmonic);
+	umat B_eff_biharmonic_T = B_eff_biharmonic.t();
+	//gplt.show_matrix(M,B_eff_T);
+	umat B_equal = (B_eff_biharmonic == B_eff_biharmonic_T);
+	size_t inside = accu(B_equal);
+	bool isInside = (inside==(M*M));
+	cout << "biharmonic equal?: " << isInside << endl;
+	*/
+
+	/*
+	umat B_eff_T = B_eff.t();
+	//gplt.show_matrix(M,B_eff_T);
+	umat B_equal = (B_eff == B_eff_T);
+	size_t inside = accu(B_equal);
+	bool isInside = (inside==(M*M));
+	cout << "transpose equal?: " << isInside << endl;;
+	vec eigval_new = eigs_sym(A_eff,number_eig_val,"la",1.0e-8);
+	eigval_new.raw_print(cout,"new eigenvalues: ");
+	*/
+
+}
+
+void Koch::fill_corner(){
+	corner = zeros<umat>(N,N);
+	//first corner
+	corner(lines[0].i1, lines[0].j1) = 1;
+	//iterate through all lines, check if "double-line"!
+	for(size_t it=1; it<lines.size(); it++){
+		if(lines[it].dir != lines[it-1].dir){
+			corner(lines[it].i1, lines[it].j1) = 1;
+		}
+	}
+}
 
 /*
 Eigensolv::Eigensolv(){
