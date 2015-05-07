@@ -2,11 +2,13 @@
 #include <iostream>
 #include <vector>
 #include <unistd.h>
+#include <string>
+#include <sstream>
 using namespace arma;
 using namespace std;
 
 int main(){
-	cout.precision(15);
+	cout.precision(7);
 
 	Koch k;
 	/*
@@ -17,7 +19,7 @@ int main(){
 	k.gplt.cmd("set ylabel 'y'");
 	k.gplt.cmd("set title 'l = 3, L = 1'");
 	*/
-	k.gplt.cmd("set size square");
+	//k.gplt.cmd("set size square");
 
 	k.fill_x();
 	//k.x.print("x: ");
@@ -28,28 +30,74 @@ int main(){
 	k.draw_lines();
 	k.update_l();
 	k.draw_lines();
+	//k.update_l();
+	//k.draw_lines();
 	k.fill_corner();
 //	k.plot_corners();
 //	k.update_l();
 //	k.draw_lines();
 //	k.update_l();
 //	k.draw_lines();
-//	k.gplt.cmd("set palette negative");
 //	k.gplt.cmd("set size square");
-	k.plot_interior_boundary();
-	//k.plot_lines();
-	//k.plot_lines();
-	k.fill_A();
+	//k.fill_A_eff();
+	//k.solve_A_eff();
 	k.fill_A_eff();
+	k.solve_A_eff();
+	/*
+	for(size_t it=0; it<10; it++){
+		k.extract_eigvec_A_eff_biharmonic(it);
+		k.plot_u_eff_biharmonic();
+		sleep(3);
+	}
+	*/
+	/*
+	for(size_t it=0; it<50; it++){
+		k.gplt.cmd("set term pdfcairo");
+		k.gplt.cmd("set size square");
+		stringstream ss1;
+		ss1 << "set output 'data/drum_l2_highres_" << it << ".pdf'";
+		string str;
+		str = ss1.str();
+		k.gplt.cmd(str);
+		k.gplt.cmd("set xlabel 'x/L'");
+		k.gplt.cmd("set ylabel 'y/L'");
+		stringstream ss2;
+		ss2 << "set title 'membrane, omega = " << k.omega_A_eff(50-1-it) << "'";
+		string str2;
+		str2 = ss2.str();
+		k.gplt.cmd(str2);
+		k.extract_eigvec_A_eff(it);
+		k.plot_u_eff();
+		k.gplt.cmd("unset output");
+	}
+	*/
+	/*
 	k.fill_A_eff_biharmonic();
 	k.solve_A();
-	//k.solve_A_eff();
+	k.solve_A_eff();
+	k.solve_A_eff_biharmonic();
+
+	for(size_t it=0; it<50; it++){
+		k.extract_eigvec_A_eff_biharmonic(it);
+		k.plot_u_eff_biharmonic();
+		sleep(3);
+	}
+	*/
+
+	//k.extract_eigvec_A_eff_biharmonic(2);
+	//k.plot_u_eff_biharmonic();
+	//k.extract_eigvec_A_eff(3);
+	//k.extract_eigvec(9);
+	//k.plot_u();
+	//k.plot_u_eff();
 	
-	for(size_t it=69; it>=1; it--){
-		k.extract_eigvec(it);
-		k.plot_u();
+/*	
+	for(size_t it=0; it<69; it++){
+		k.extract_eigvec_A_eff(it);
+		k.plot_u_eff();
 		sleep(1);
 	}
+*/
 
 //	k.x.print("x: ");
 
@@ -61,53 +109,6 @@ int main(){
 	cout << "l: " << k.l << endl;
 	cout << "matrix size: " << k.N*k.N << endl;
 	cout << "number of interior points: " << accu(k.interior) << endl;
-	/*
-	cout << "points in B: " << accu(k.B) << endl;
-	cout << "points in C: " << accu(k.C) << endl;
-	cout << "points in D: " << accu(k.D) << endl;
-	*/
-
-
-	//k.plot_lines();
-	//k.draw_lines();
-	//k.plot_boundary();
-	//k.plot_lines();
-	//k.draw_lines();
-	//sleep(4);
-	//k.plot_boundary();
-	//k.plot_lines();
-	//k.draw_lines();
-	//sleep(4);
-	//k.plot_boundary();
-	/*
-	k.update_l();
-	sleep(2);
-	k.plot_lines();
-	k.update_l();
-	sleep(2);
-	k.plot_lines();
-	*/
-	//k.draw_lines();
-	//sleep(4);
-	//k.plot_lines();
-	//k.plot_single_line_corners(3);
-	/*
-	k.plot_lines();
-//	k.draw_lines();
-	k.update_l();
-	sleep(4);
-	k.plot_lines();
-	k.update_l();
-	sleep(4);
-	k.plot_lines();
-	sleep(4);
-	k.update_l();
-	k.plot_lines();
-	cout << k.lines.size() << endl;
-	for(size_t i=0; i<k.lines.size(); i++){
-		k.lines[i].print();
-	}
-	*/
 
 	return 0;
 }

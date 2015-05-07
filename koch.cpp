@@ -2,6 +2,7 @@
 #include <cmath>
 #include <iostream>
 
+//**** POINT CLASS ****//
 Point::Point(){
 	i=0;
 	j=0;
@@ -23,7 +24,7 @@ bool Point::equal(Point &p){
 	}
 }
 
-
+//**** LINE CLASS ****//
 Line::Line(){
 	i1 = 0;
 	i2 = 0;
@@ -42,24 +43,17 @@ Line::Line(size_t i_1, size_t j_1, size_t i_2, size_t j_2, int d){
 
 Line::~Line(){}
 
-void Line::print(){
-	cout << "i1 :" << i1 << endl
-	     << "j1 :" << j1 << endl
-	     << "i2 :" << i2 << endl
-	     << "j2 :" << j2 << endl
-	     << "dir: " << dir << endl << endl;
-}
 
-
+//**** KOCH CLASS ****//
 Koch::Koch(){
-	number_eig_val = 70;
+	number_eig_val = 50;
 	n = 4;
 	l_max = 2;
 	l = 0;
 	L = 1.0;
 	s = 1.0;
-	m = 2.0;
-	m_int = 2;
+	m = 4.0;
+	m_int = 4;
 	delta_min = L*pow(0.25,l_max);
 	delta = delta_min/m;
 	grid_max = L/2.0;
@@ -71,9 +65,6 @@ Koch::Koch(){
 	N = (size_t) N_double;
 	N = 2*N + 1; //+3
 	origin = N/2; 
-	//boundary = zeros<umat>(N,N);
-	//interior = zeros<umat>(N,N);
-	//grid = zeros<mat>(N,N);
 }
 
 Koch::~Koch(){}
@@ -203,25 +194,36 @@ void Koch::plot_u(){
 	gplt.heatmap_coords(x,x,u,N,X,Y);
 }
 
+void Koch::plot_u_eff(){
+	vector<double> X ; 
+	vector<double> Y;
+	for(size_t it=0; it<n; it++){
+		X.push_back(x(lines[it].i1));
+		X.push_back(x(lines[it].i2));
+		Y.push_back(x(lines[it].j1));
+		Y.push_back(x(lines[it].j2));
+	}
+	gplt.heatmap_coords(x,x,u_A_eff,N,X,Y);
+}
+
+void Koch::plot_u_eff_biharmonic(){
+	vector<double> X ; 
+	vector<double> Y;
+	for(size_t it=0; it<n; it++){
+		X.push_back(x(lines[it].i1));
+		X.push_back(x(lines[it].i2));
+		Y.push_back(x(lines[it].j1));
+		Y.push_back(x(lines[it].j2));
+	}
+	gplt.heatmap_coords(x,x,u_A_eff_biharmonic,N,X,Y);
+}
+
 void Koch::initialize_line(){
 	size_t steps = m_int*intpower(4,l_max)/4;
 	stp = steps;
 	s_index = 4*steps + 1;
-	cout << "steps: " << steps << endl;
-	cout << "s_index: " << s_index << endl;
 	size_t longstep = 2*steps;
-	/*
-	stp = steps;
-	lstp = longstep;
-	cout << "longstep: " << longstep << endl;
-	interior.submat(origin-longstep, origin-longstep, origin+longstep, origin+longstep) = ones<umat>(2*longstep+1,2*longstep+1);
-	boundary = interior;
-	boundary.submat(origin-longstep+1, origin-longstep+1, origin+longstep-1, origin+longstep-1) = zeros<umat>(2*(longstep-1)+1,2*(longstep-1)+1);
-	interior.save("interior.dat", arma_ascii);
-	boundary.save("boundary.dat", arma_ascii);
-	*/
-	
-	//line 1
+	//** Line 1 **//
 	Line line1;
 	line1.i1 = origin - longstep;
 	line1.i2 = origin + longstep;
@@ -229,8 +231,7 @@ void Koch::initialize_line(){
 	line1.j2 = line1.j1;
 	line1.dir = 1;
 	lines[0] = line1;
-	
-	//line 2
+	//** Line 2 **//
 	Line line2;
 	line2.i1 = origin + longstep;
 	line2.i2 = line2.i1;
@@ -238,15 +239,15 @@ void Koch::initialize_line(){
 	line2.j2 = origin - longstep;
 	line2.dir = 2;
 	lines[1] = line2;
-	
-	//line 3
+	//** Line 3 **//
 	Line line3;
 	line3.i1 = origin + longstep;
 	line3.i2 = origin - longstep;
-	line3.j1 = origin - longstep; line3.j2 = line3.j1; line3.dir = 3;
+	line3.j1 = origin - longstep;
+       	line3.j2 = line3.j1;
+       	line3.dir = 3;
 	lines[2] = line3;
-	
-	//line 4
+	//** Line 4 **//
 	Line line4;
 	line4.i1 = origin - longstep;
 	line4.i2 = line4.i1;
@@ -261,17 +262,13 @@ void Koch::initialize_interior(){
 	umat box = ones<umat>(s_index-2,s_index-2);
 	size_t low = origin-2*stp+1;
 	size_t high = origin+2*stp-1;
-	//interior.submat(low,low,high,high) = box;
 	interior.submat(lines[3].i1+1,lines[3].j1+1,lines[0].i2-1,lines[0].j2-1) = box;
-	interior.save("data/interior_init.dat",arma_ascii);
 }
 
 void Koch::draw_lines(){
-	cout << "entering draw_lines" << endl;
 	boundary = ones<umat>(N,N);
 	uvec ins_col = zeros<uvec>(s_index);
 	urowvec ins_row = zeros<urowvec>(s_index);
-	cout << "s_index: " << s_index << endl;
 	for(size_t it=0; it<lines.size(); it++){
 		if(lines[it].dir == 1){
 			boundary.col(lines[it].j1).subvec(lines[it].i1, lines[it].i2) = ins_col;
@@ -290,87 +287,19 @@ void Koch::draw_lines(){
 			interior.row(lines[it].i1).subvec(lines[it].j1, lines[it].j2) = ins_row;
 		}
 	}
-	//boundary.save("data/boundaryBigBig5.dat", raw_ascii);
-	interior.save("data/interior_draw.dat",arma_ascii);
-	//exterior = zeros<umat>(N,N);
-	//exterior = exterior - interior;
-	cout << "leaving draw_lines" << endl;
-}
-
-/*
-void Koch::fill_interior(){
-	for(size_t j=0; j<N; j++){
-		size_t start = 0;
-		size_t stop = 0;
-		size_t i = 0;
-		bool hitwall = false;
-		bool outsideBoundary = true;
-		for(size_t i=0; i<N, i++){
-			if(outsideBoundary){
-				boundary(i,j) = 0;
-			}
-			size_t peek = i+1;
-			if(boundary(peek,j)==0){
-				hitwall = true;
-
-		while(!hitwall){
-			boundary(i,j) = 0;
-			i = i+1;
-			if(boundary(i,j)==0){
-				hitwall = true;
-				start = i;
-*/
-
-
-
-
-void Koch::test_lines(){
-	umat test = zeros<umat>(N,N);
-
-	uvec del_col = zeros<uvec>(stp-1);
-	uvec ins_col = ones<uvec>(2*lstp+1);
-	urowvec del_row = zeros<urowvec>(stp-1);
-	urowvec ins_row = ones<urowvec>(2*lstp+1);
-
-	ins_col.print();
-	cout << endl;
-	ins_row.print();
-	cout << endl;
-
-	for(size_t it=0; it<lines.size(); it++){
-		if(lines[it].dir == 1){
-			test.col(lines[it].j1).subvec(lines[it].i1, lines[it].i2) = ins_col;
-		}
-		else if(lines[it].dir == 2){
-			test.row(lines[it].i1).subvec(lines[it].j1, lines[it].j2) = ins_row;
-		}
-		else if(lines[it].dir == 3){
-			test.col(lines[it].j1).subvec(lines[it].i2, lines[it].i1) = ins_col;
-		}
-		else{
-			test.row(lines[it].i1).subvec(lines[it].j2, lines[it].j1) = ins_row;
-		}
-	}
-	test.save("test_lines.dat",arma_ascii);
 }
 
 void Koch::update_l(){
 	if((l+1) > l_max){
 		return;
 	}
-	cout << "entering update_l()" << endl;
 	int new_l = l+1;
 	size_t new_n = 8*n;
 	size_t s = m_int*intpower(4,l_max)/intpower(4,new_l); //CAREFUL
-	size_t longstep = 2*s;
-	cout << "new_l: " << new_l << endl;
-	cout << "steps: " << s << endl;
-	cout << "longstep: " << longstep << endl;
 	vector<Line> new_lines;
 	s_index = s + 1;
 	l = new_l;
 	n = new_n;
-	cout << "s_index:" << s_index << endl;
 
 	//update interior first
 	umat add = ones<umat>(s_index,s_index);
@@ -394,7 +323,6 @@ void Koch::update_l(){
 			interior.submat(lines[it].i1,lines[it].j1+2*s,lines[it].i1+s,lines[it].j1+3*s) = del;
 		}
 	}
-	interior.save("data/interior_update.dat",arma_ascii);
 
 	//Update lines
 	for(size_t it=0; it<lines.size(); it++){
@@ -480,11 +408,9 @@ void Koch::update_l(){
 		}
 	}
 	lines = new_lines;
-	cout << "leaving update_l()" << endl;
 }
 
 void Koch::fill_A(){
-	cout << "entering fill_A()" << endl;
 	A = sp_mat(N*N,N*N);
 	B = zeros<umat>(N*N,N*N);
 	size_t i = 0;
@@ -498,7 +424,6 @@ void Koch::fill_A(){
 		if(interior(i,j)==0){
 			continue;
 		}
-		//A(row,row) = 0.0;
 		B(row,row) = 0;
 		//left
 		if((i-1) >= 0){
@@ -530,11 +455,10 @@ void Koch::fill_A(){
 		}
 		i++;
 	}
-	cout << "leaving fill_A()" << endl;
 }
 
 void Koch::solve_A(){
-	eigs_sym(eigval_A, eigvec_A, A, number_eig_val,"la", 1.0e-9);
+	eigs_sym(eigval_A, eigvec_A, A, number_eig_val,"la", 1.0e-10);
 	omega_A = eigval_A;
 	for(size_t i=0; i<number_eig_val; i++){
 		omega_A(i) = sqrt(4.0 - eigval_A(i))/delta;
@@ -546,7 +470,7 @@ void Koch::solve_A(){
 }
 
 void Koch::solve_A_eff(){
-	eigs_sym(eigval_A_eff, eigvec_A_eff, A_eff, number_eig_val,"la", 1.0e-9);
+	eigs_sym(eigval_A_eff, eigvec_A_eff, A_eff, number_eig_val,"la", 1.0e-10);
 	omega_A_eff = eigval_A_eff;
 	for(size_t i=0; i<number_eig_val; i++){
 		omega_A_eff(i) = sqrt(4.0 - eigval_A_eff(i))/delta;
@@ -558,7 +482,7 @@ void Koch::solve_A_eff(){
 }
 
 void Koch::solve_A_eff_biharmonic(){
-	eigs_sym(eigval_A_eff_biharmonic, eigvec_A_eff_biharmonic, A_eff_biharmonic, number_eig_val,"la", 1.0e-9);
+	eigs_sym(eigval_A_eff_biharmonic, eigvec_A_eff_biharmonic, A_eff_biharmonic, number_eig_val,"sa", 1.0e-10);
 	omega_A_eff_biharmonic = eigval_A_eff_biharmonic;
 	for(size_t i=0; i<number_eig_val; i++){
 		omega_A_eff_biharmonic(i) = pow(eigval_A_eff_biharmonic(i), 0.25)/delta;
@@ -582,23 +506,35 @@ void Koch::extract_eigvec(size_t k){
 	}
 }
 
+void Koch::extract_eigvec_A_eff(size_t k){
+	size_t mode = number_eig_val - 1 - k;
+	u_A_eff = zeros<mat>(N,N);
+	for(size_t m=0; m<points.size(); m++){
+		u_A_eff(points[m].i, points[m].j) = eigvec_A_eff(m,mode);
+	}
+}
+
+void Koch::extract_eigvec_A_eff_biharmonic(size_t k){
+	u_A_eff_biharmonic = zeros<mat>(N,N);
+	for(size_t m=0; m<points.size(); m++){
+		u_A_eff_biharmonic(points[m].i, points[m].j) = eigvec_A_eff_biharmonic(m,k);
+	}
+}
 
 void Koch::fill_A_eff(){
-	vector<Point> points;
+	vector<Point> new_points;
 	for(size_t i=0; i<N; i++){
 		for(size_t j=0; j<N; j++){
 			if(interior(i,j)==1){
 				Point point(i,j);
-				points.push_back(point);
+				new_points.push_back(point);
 			}
 		}
 	}
-	cout << "size of points: " << points.size() << endl;
+	points = new_points;
 	size_t M = points.size();
 	A_eff = sp_mat(M,M);
 	B_eff = umat(M,M);
-//	sp_mat A_eff(M,M);
-//	umat B_eff(M,M);
 
 	for(size_t m=0; m<M; m++){
 
@@ -663,25 +599,21 @@ void Koch::fill_A_eff(){
 	vec eigval_new = eigs_sym(A_eff,number_eig_val,"la",1.0e-8);
 	eigval_new.raw_print(cout,"new eigenvalues: ");
 	*/
-
-
 }
 
 
 void Koch::fill_A_eff_biharmonic(){
-	vector<Point> points;
+	vector<Point> new_points;
 	for(size_t i=0; i<N; i++){
 		for(size_t j=0; j<N; j++){
 			if(interior(i,j)==1){
 				Point point(i,j);
-				points.push_back(point);
+				new_points.push_back(point);
 			}
 		}
 	}
-	cout << "size of points: " << points.size() << endl;
+	points = new_points;
 	size_t M = points.size();
-//	sp_mat A_eff_biharmonic(M,M);
-//	umat B_eff(M,M);
 	A_eff_biharmonic = sp_mat(M,M);
 	B_eff_biharmonic = umat(M,M);
 
@@ -893,18 +825,6 @@ void Koch::fill_A_eff_biharmonic(){
 	bool isInside = (inside==(M*M));
 	cout << "biharmonic equal?: " << isInside << endl;
 	*/
-
-	/*
-	umat B_eff_T = B_eff.t();
-	//gplt.show_matrix(M,B_eff_T);
-	umat B_equal = (B_eff == B_eff_T);
-	size_t inside = accu(B_equal);
-	bool isInside = (inside==(M*M));
-	cout << "transpose equal?: " << isInside << endl;;
-	vec eigval_new = eigs_sym(A_eff,number_eig_val,"la",1.0e-8);
-	eigval_new.raw_print(cout,"new eigenvalues: ");
-	*/
-
 }
 
 void Koch::fill_corner(){
@@ -918,20 +838,6 @@ void Koch::fill_corner(){
 		}
 	}
 }
-
-/*
-Eigensolv::Eigensolv(){
-	curve = Koch();
-}
-
-Eigensolv::~Eigensolv(){}
-
-void Eigensolv::initialize(){
-	curve.initialize_line();
-	curve.initialize_interior();
-}
-
-*/
 
 
 
